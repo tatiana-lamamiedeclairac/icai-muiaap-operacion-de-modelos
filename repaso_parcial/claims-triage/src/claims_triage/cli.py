@@ -10,6 +10,7 @@ Pasos del programa:
   3. predict     : predice cada siniestro                             (ejercicios 3 y 4)
   4. escribe el CSV de salida                                         (ejercicio 4)
 """
+import pandas as pd 
 
 import argparse
 import csv  # noqa: F401
@@ -27,15 +28,17 @@ OUTPUT_COLUMNS = ["claim_id", "decision", "risk_probability", "model_version"]
 
 def read_claims(path):
     """EJERCICIO 2: leer el CSV y devolver la lista de siniestros validados."""
-    # TODO 2.8: leer el fichero CSV indicado, cuyas filas tienen las columnas
-    #   de ClaimRequest.
+    csv = pd.read_csv(path)
+    claims=[]
 
-    # TODO 2.9: validar cada fila con ClaimRequest. Si alguna fila no es valida,
-    #   hay que parar con un ValueError cuyo mensaje diga en que LINEA del
-    #   fichero esta el problema y cual es (la cabecera es la linea 1).
+    for i, row in csv.iterrows:
+        try:
+            claim = ClaimRequest(**row.to_dict())
+            claims.append(claim)
+        except Exception as e:
+            raise ValidationError(f"El error {e} se ha dado en la fila {i}")
+    return claims
 
-    # TODO 2.10: devolver la lista con todos los siniestros validados.
-    raise NotImplementedError("TODO: ejercicio 2 (read_claims)")
 
 
 def main(argv=None):

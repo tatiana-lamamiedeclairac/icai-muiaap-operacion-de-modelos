@@ -9,7 +9,7 @@ Un modelo de Pydantic es una clase con campos y tipos. Al crear un objeto,
 Pydantic comprueba los datos y lanza ValidationError si algo no cuadra.
 """
 
-from typing import Literal  # noqa: F401  (lo usareis en los TODO)
+from typing import Literal, Optional  # noqa: F401  (lo usareis en los TODO)
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator  # noqa: F401
 
@@ -23,41 +23,21 @@ class ClaimRequest(BaseModel):
     El lector de CSV entrega TODOS los valores como texto ("29", "3.5"...).
     Pydantic debe convertirlos al tipo correcto y rechazar los que no cuadren.
     """
-
     # Ya hecho: no se admiten columnas que no esten declaradas en este modelo.
     model_config = ConfigDict(extra="forbid")
 
     # Ejemplo ya hecho: un texto que no puede estar vacio.
     claim_id: str = Field(min_length=1)
 
-    # TODO 2.1: policy_type. Solo se admiten los valores "basico",
-    #           "terceros_ampliado" y "todo_riesgo".
+    policy_type: Literal["basico", "terceros_ampliado", "todo_riesgo"]
+    driver_age: int = Field(ge=18, le=90)
+    vehicle_age_years: Optional[float] = Field(None, ge=0, le=30)
+    claim_amount_eur: float = Field(gt=0, le=100000)
+    injuries: int = Field(ge=0, le=1)
+    police_report: int = Field(ge=0, le=1)
 
-    # TODO 2.2: driver_age. Numero entero; el conductor debe ser mayor de edad
-    #           y no pasar de 90 anos.
 
-    # TODO 2.3: vehicle_age_years. Numero decimal entre 0 y 30 anos.
-    #           Es OPCIONAL: puede no venir informado.
 
-    # TODO 2.4: claim_amount_eur. Numero decimal; el importe debe ser mayor
-    #           que 0 y como maximo 100000.
-
-    # TODO 2.5: injuries. Entero que solo puede valer 0 o 1.
-
-    # TODO 2.6: police_report. Entero que solo puede valer 0 o 1.
-
-    # TODO 2.7: en el CSV, un dato que falta llega como "" (texto vacio), y ""
-    #           no es un numero. Haced que, para vehicle_age_years, el valor ""
-    #           se interprete como "no informado" (None) y cualquier otro valor
-    #           pase sin cambios. Plantilla de un validador de Pydantic:
-    #
-    #   @field_validator("vehicle_age_years", mode="before")
-    #   @classmethod
-    #   def empty_is_none(cls, value):
-    #       # mode="before": recibe el valor ANTES de que Pydantic lo convierta
-    #       if value == "":
-    #           return ...        # que devolver cuando esta vacio
-    #       return value          # en cualquier otro caso, el valor tal cual
 
 
 # ---------------------------------------------------------------------------
