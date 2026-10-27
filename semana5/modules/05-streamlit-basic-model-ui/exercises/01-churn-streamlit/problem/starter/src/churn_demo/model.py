@@ -5,7 +5,10 @@ from typing import Literal, TypedDict
 
 ChurnLabel = Literal["Baja probable", "Permanencia probable"]
 
-
+# Un objeto ChurnPrediction va a ser un diccionario ya que es una clase que 
+# hereda de TypeDict. Por eso, para un objeto ChurnPrediction podemos coger
+# los atributos como: resultado["label"]. Mientras que si fuese una clase normal
+# de Python (class ChurnPrediction:), cogeríamos los atributos como resultado.label
 class ChurnPrediction(TypedDict):
     """Salida pequeña, serializable y comprensible por cualquier interfaz."""
 
@@ -14,7 +17,7 @@ class ChurnPrediction(TypedDict):
     risk_score: float
     explanation: str
 
-
+# Comprueba que los datos introducidos son válidos
 def _whole_number(name: str, value: int | float, upper: int) -> int:
     """Normaliza los enteros que un slider puede entregar como `float`."""
 
@@ -28,7 +31,7 @@ def _whole_number(name: str, value: int | float, upper: int) -> int:
         raise ValueError(f"{name} debe estar entre 0 y {upper}")
     return normalized
 
-
+# Comprueba que los datos introducidos son válidos
 def _bounded_number(name: str, value: int | float, upper: float) -> float:
     """Valida un número real finito dentro del rango didáctico."""
 
