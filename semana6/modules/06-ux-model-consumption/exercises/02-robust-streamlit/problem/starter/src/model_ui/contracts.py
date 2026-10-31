@@ -16,7 +16,7 @@ ErrorCode = Literal[
     "prediction_error",
 ]
 
-
+# predicción devuelta por nuestro gateway
 class PredictionPayload(BaseModel):
     """Salida equivalente a la que producen los módulos de S3/S4."""
 
@@ -28,6 +28,10 @@ class PredictionPayload(BaseModel):
     preprocessing_version: str = Field(min_length=1)
 
 
+# predicción preparada para el usuario. 
+# Esta clase presenta un View Model, es decir, un objeto que contiene
+# la infromación ya preparada para que la interfaz pueda mostrarla fácilmente.
+# Toma la predicción que ya existe y añade información para poder presentarla
 @dataclass(frozen=True)
 class PredictionView:
     """Datos ya preparados para renderizar en la interfaz."""
