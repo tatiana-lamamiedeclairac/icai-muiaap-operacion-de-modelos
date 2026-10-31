@@ -76,13 +76,74 @@ def collect_values(st: Any) -> tuple[bool, dict[str, float]]:
 def get_cached_gateway(st: Any, bundle_value: str | None) -> InferenceGateway:
     """TODO: usa `st.cache_resource` sobre el gateway, no sobre la respuesta."""
 
-    raise NotImplementedError("TODO: cachea el gateway heredado de S5")
+    @st.cache_resource
+    def load_gateway(path: str | None) -> InferenceGateway:
+        return build_gateway(path)
+
+    return load_gateway(bundle_value)
 
 
 def render_state(st: Any, state: UiState, target: Any | None = None) -> None:
     """TODO: presenta idle/loading/success/error en un target de Streamlit."""
 
-    raise NotImplementedError("TODO: renderiza el estado sin mostrar excepciones")
+    container = (
+        target.container(border=True)
+        if target is not None
+        else st.container(border=True)
+    )
+
+    with container:
+
+        if state.phase == "idle":
+            st.info("Completa el formulario y pulsa 'Ejecutar inferencia'.")
+
+        elif state.phase == "loading":
+            st.info("Validando los datos y ejecutando la inferencia...")
+
+        elif state.phase == "success":
+            view = state.view
+
+            if view is None:
+                st.error("No se ha podido mostrar el resultado.")
+                return
+
+            st.success("Inferencia completada")
+
+            col1, col2, col3 = st.columns(3)
+
+            col1.metric("Resultado", view.quality_label)
+            col2.metric("Confianza", f"{view.confidence:.0%}")
+            col3.metric("Latencia", f"{view.latency_ms:.0f} ms")
+
+            if view.confidence_level == "low":
+                st.warning(view.confidence_message)
+            else:
+                st.info(view.confidence_message)
+
+            if view.latency_status == "above_target":
+                st.warning(view.latency_message)
+            else:
+                st.caption(view.latency_message)
+
+            with st.expander("Trazabilidad"):
+                st.write("Versión del modelo:", view.model_version)
+                st.write(
+                    "Versión del preprocesado:",
+                    view.preprocessing_version,
+                )
+                st.write("Request ID:", state.request_id)
+
+        elif state.phase == "error":
+            error = state.error
+
+            if error is None:
+                st.error("La inferencia ha fallado.")
+                return
+
+            st.error(f"{error.title}: {error.message}")
+            st.info(error.recovery)
+            st.caption(f"Request ID: {error.request_id}")
+
 
 
 def main() -> None:
