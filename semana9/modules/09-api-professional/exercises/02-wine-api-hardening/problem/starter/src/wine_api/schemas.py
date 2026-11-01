@@ -67,6 +67,9 @@ class QualityBand(StrEnum):
     EXCELLENT = "excellent"
 
 
+# Contrato de la predicción que la API le devuelve al usuario.
+# Define qué información de la predicción ModelOutput (está en predictor.py) queremos
+# mostrar al usuario
 class Prediction(BaseModel):
     """Predicción pública: no incluye puntuaciones internas del modelo."""
 
@@ -74,12 +77,38 @@ class Prediction(BaseModel):
     # `quality_band` (usa QualityBand, no `str`), `confidence` (entre 0 y 1),
     # `model_version` y `preprocessing_version`. Lo que no declares aquí no
     # saldrá en la respuesta: así se filtra `raw_score`.
+    
+    # Permite que Pydantic construya un objeto Prediction a partir de los atributos
+    # de otro objeto de Python, no solamente a partir de un diccionario. (Normalmente
+    # siempre devolvíamos un diccionario, por eso no poníamos eso, pero en este caso
+    # queremos devolver un objeto de tipo ModelOutput)
+    model_config = ConfigDict(from_attributes=True)
+
+    quality_band: QualityBand
+    confidence: float = Field(ge=0, le=1)
+    model_version: str
+    preprocessing_version: str
+
+       
+
     # TODO S9.1b: el modelo devuelve la confianza con todos sus decimales; el
     # contrato público la expone con dos. Investiga `@field_serializer` de
     # Pydantic v2: la decisión pertenece al contrato, no al predictor.
     # Comprobación: tests/test_s9_1_output_contract.py
 
+    # Le dice a Pydantic que utilice la función que aparece debajo para serializar
+    # el atributo confidence. 
+    # self representa el objeto Prediction
+    @field_serializer("confidence")
+    def serialize_confidence(self, value: float) -> float:
+        return round(value, 2)
 
+
+
+
+
+# Define la respuesta HTTP completa que recibe el usuario. Incluye la 
+# predicción (contrato Prediction), el identificador de la petición y la fecha.
 class PredictionResponse(BaseModel):
     """Respuesta de `POST /v1/predictions`."""
 
@@ -87,6 +116,15 @@ class PredictionResponse(BaseModel):
     # nuevo `served_at: datetime`. Serialízalo en UTC, ISO 8601 y con sufijo
     # `Z` (por ejemplo `2026-10-20T09:15:00.123Z`). Añadir un campo es un
     # cambio compatible: ¿qué parte de la versión de la API debes subir?
+    prediction: Prediction
+    request_id: str
+    served_at: datetime
+
+    @field_serializer("served_at")
+    def serializer_served_at(self, value: datetime) -> str:
+        return value.astimezone(UTC).isoformat(
+            timespec="milliseconds"
+        ).replace("+00:00", "Z")
 
 
 class HealthResponse(BaseModel):
