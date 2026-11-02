@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
+# frozen = True impide reasignar normalmente los atributos de los objetos una vez creados
+# slots = True hace que los objetos utilicen una estructura de atributos más restringida, que suele ahorrar memoria
 @dataclass(frozen=True, slots=True)
 class FieldSpec:
     """Describe cómo representa la UI un campo del contrato de inferencia."""
@@ -16,7 +17,11 @@ class FieldSpec:
     default: float
     step: float
 
+# Diferencia entre tupla y lista en Python: Las listas se pueden modificar después de crearlas,
+# mientras que las tuplas son inmutables
 
+# Describe cómo debe construirse cada widget, para que no lo tengamos que 
+# hacer nosotros uno por uno. 
 FIELD_SPECS: tuple[FieldSpec, ...] = (
     FieldSpec(
         name="fixed_acidity",

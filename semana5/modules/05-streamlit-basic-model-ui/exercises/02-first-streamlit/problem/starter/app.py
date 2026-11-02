@@ -11,6 +11,7 @@ from model_ui.contracts import PredictionPayload
 from model_ui.errors import ArtifactUnavailableError, InputContractError
 from model_ui.gateway import InferenceGateway, PackagedBundleGateway
 from model_ui.ui_schema import FIELD_SPECS
+from model_ui.presentation import confidence_caption, quality_label
 
 
 def build_gateway() -> InferenceGateway:
@@ -46,17 +47,42 @@ def collect_values(st: Any) -> tuple[bool, dict[str, float]]:
     estable. Devuelve ``(submitted, values)`` sin llamar al gateway.
     """
 
-    raise NotImplementedError(
-        f"TODO: renderiza los {len(FIELD_SPECS)} campos de FIELD_SPECS"
-    )
+    # Crear el diccionario vacío
+    values: dict[str, float] = {}
+
+    # Crear el formulario
+    with st.form("wine_quality_form"):
+        # Recorremos los 11 campos de FIELD_SPECS
+        for field in FIELD_SPECS:
+            # st.number_input devuelve el valor numérico introducido por el usuario.
+            # por lo que por ej. en la primera iteración va a quedar values["fixed_acidity"] = 7.4
+            values[field.name] = st.number_input(
+                field.label,
+                min_value=field.min_value,
+                max_value=field.max_value,
+                value=field.default,
+                step=field.step,
+                key=f"input_{field.name}" # El profesor ha puesto que cada widget tenga una clave única con el prefijo input_
+            )
+
+        submitted = st.form_submit_button("Ejecutar inferencia")
+    
+    return submitted, values
 
 
 def render_prediction(st: Any, prediction: PredictionPayload) -> None:
     """TODO: presenta los cuatro campos de ``PredictionPayload``."""
 
-    raise NotImplementedError(
-        "TODO: presenta quality_band, confidence y las dos versiones"
-    )
+    st.write(f"quality_band: {prediction.quality_band}") # Mostramos la categoría tal y como la devuelve el modelo
+    st.write(quality_label(prediction))
+
+    st.write(f"confidence: {prediction.confidence:.2f}")
+    st.caption(confidence_caption(prediction))
+
+    st.write(f"model_version: {prediction.model_version}")
+    st.write(f"preprocessing_version: {prediction.preprocessing_version}")
+
+    
 
 
 def run_app(st: Any, gateway: InferenceGateway) -> None:
@@ -68,6 +94,7 @@ def run_app(st: Any, gateway: InferenceGateway) -> None:
         return
 
     try:
+        # gateway es un objeto que dispone de un método llamado predict()
         prediction = gateway.predict(values)
     except ArtifactUnavailableError:
         render_bundle_error(st)

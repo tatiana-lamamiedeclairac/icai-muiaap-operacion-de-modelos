@@ -19,9 +19,9 @@ en B y C, el cliente se comunica con el proceso servidor.
 
 | Caso | ¿Sale del proceso Python? | ¿Usa HTTP? | ¿La ruta nombra una acción o un recurso? |
 | --- | --- | --- | --- |
-| A |  |  |  |
-| B |  |  |  |
-| C |  |  |  |
+| A | No | No | Función/acción |
+| B | Sí | Sí | Una acción, porque runPumpModel significa ejecutar el modelo |
+| C | Sí | Sí | Un recurso |
 
 
 
@@ -34,9 +34,20 @@ http://127.0.0.1:8000/v1/predictions/pred-42?include=explanation&limit=1
 **TODO:** marcad scheme, host, port, path y cada parámetro de query. Después
 decidid dónde pondríais:
 
-- el identificador de una predicción concreta;
-- un límite de resultados;
-- cuatro medidas de una bomba.
+- el identificador de una predicción concreta; -> en el path
+- un límite de resultados; -> en el query
+- cuatro medidas de una bomba. -> en el body de la petición
+
+scheme -> http
+host -> 127.0.0.1
+port -> 8000
+path -> predictions/pred-42
+parámetros query -> include=explanation, 
+                  limit=1
+
+
+
+
 
 **Comprobación:** las medidas estructuradas no deberían acabar en la URL.
 
@@ -50,30 +61,33 @@ decidid dónde pondríais:
 formas JSON de booleano, nulo y colección. Comprobad el resultado con un
 validador local o `json.loads()`.
 
+ - json.dumps() -> transforma un objeto Python en una cadena de texto JSON
+ - json.loads() -> transforma una cadena de texti JSON en un objeto Python
+
 ## 4. Cuatro estados HTTP esenciales
 
 Para cada caso, elegid solo entre `200`, `400`, `422` y `503`. Escribid el
 código y una razón de una frase.
 
-1. Predicción correcta y devuelta: código ____; razón: ____________________.
-2. Texto truncado o que no es JSON: código ____; razón: ____________________.
-3. JSON válido, pero `vibration_mm_s` es la cadena `"alta"`: código ____;
-   razón: ____________________.
+1. Predicción correcta y devuelta: código  200 ; razón: La petición se ha procesado correctamente.
+2. Texto truncado o que no es JSON: código 400; razón: La petición está mal formada.
+3. JSON válido, pero `vibration_mm_s` es la cadena `"alta"`: código 422;
+   razón: Los datos no cumplen con el formato esperado.
 4. Petición correcta, pero el modelo no está disponible temporalmente: código
-   ____; razón: ____________________.
+   503; razón: El servicio no puede atender la petición.
 
 ## 5. Crear y consultar una predicción
 
 Completad estas plantillas:
 
 ```text
-Crear una predicción:    [MÉTODO] /v1/[RECURSO]
-Consultar la predicción: [MÉTODO] /v1/[RECURSO]/[ID]
+Crear una predicción:    POST /v1/prediction
+Consultar la predicción: GET /v1/prediction/pred-42
 ```
 
-¿Dónde van las mediciones: en el path, en la query o en el body JSON? ¿Dónde va
-`pred-42`? ¿Qué podría pasar si se repite dos veces la creación? ¿Consultar dos
-veces debería cambiar el estado del servidor?
+¿Dónde van las mediciones: en el path, en la query o en el body JSON? En el body ¿Dónde va
+`pred-42`? En la url ¿Qué podría pasar si se repite dos veces la creación? Que se crearían predicciones duplicadas ¿Consultar dos
+veces debería cambiar el estado del servidor? No, no debería.
 
 - **segura:** está pensada solo para leer, sin cambiar el estado del servidor;
 - **idempotente:** repetirla tiene el mismo efecto esperado que ejecutarla una
