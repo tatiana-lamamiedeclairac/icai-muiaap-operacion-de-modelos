@@ -38,17 +38,61 @@ class WineFeatures(BaseModel):
     # TODO S9.3d: añade `description=` a cada Field (unidad incluida, p. ej.
     # "Alcohol (% vol.)."). Swagger la muestra junto al rango; el test
     # `test_feature_fields_are_described` comprueba los once campos.
-    fixed_acidity: float = Field(ge=0, le=20)
-    volatile_acidity: float = Field(ge=0, le=2)
-    citric_acid: float = Field(ge=0, le=2)
-    residual_sugar: float = Field(ge=0, le=20)
-    chlorides: float = Field(ge=0, le=1)
-    free_sulfur_dioxide: float = Field(ge=0, le=100)
-    total_sulfur_dioxide: float = Field(ge=0, le=300)
-    density: float = Field(ge=0.98, le=1.01)
-    ph: float = Field(ge=2.5, le=4.5)
-    sulphates: float = Field(ge=0, le=3)
-    alcohol: float = Field(ge=5, le=20)
+    fixed_acidity: float = Field(
+        ge=0,
+        le=20,
+        description="Acidez fija (g/L, expresada como ácido tartárico).",
+    )
+    volatile_acidity: float = Field(
+        ge=0,
+        le=2,
+        description="Acidez volátil (g/L, expresada como ácido acético).",
+    )
+    citric_acid: float = Field(
+        ge=0,
+        le=2,
+        description="Concentración de ácido cítrico (g/L).",
+    )
+    residual_sugar: float = Field(
+        ge=0,
+        le=20,
+        description="Azúcar residual (g/L).",
+    )
+    chlorides: float = Field(
+        ge=0,
+        le=1,
+        description="Cloruros (g/L).",
+    )
+    free_sulfur_dioxide: float = Field(
+        ge=0,
+        le=100,
+        description="Dióxido de azufre libre (mg/L).",
+    )
+    total_sulfur_dioxide: float = Field(
+        ge=0,
+        le=300,
+        description="Dióxido de azufre total (mg/L).",
+    )
+    density: float = Field(
+        ge=0.98,
+        le=1.01,
+        description="Densidad del vino (g/cm³).",
+    )
+    ph: float = Field(
+        ge=2.5,
+        le=4.5,
+        description="pH del vino (sin unidades).",
+    )
+    sulphates: float = Field(
+        ge=0,
+        le=3,
+        description="Concentración de sulfatos (g/L).",
+    )
+    alcohol: float = Field(
+        ge=5,
+        le=20,
+        description="Graduación alcohólica (% vol.).",
+    )
 
 
 class PredictionRequest(BaseModel):
@@ -77,7 +121,7 @@ class Prediction(BaseModel):
     # `quality_band` (usa QualityBand, no `str`), `confidence` (entre 0 y 1),
     # `model_version` y `preprocessing_version`. Lo que no declares aquí no
     # saldrá en la respuesta: así se filtra `raw_score`.
-    
+
     # Permite que Pydantic construya un objeto Prediction a partir de los atributos
     # de otro objeto de Python, no solamente a partir de un diccionario. (Normalmente
     # siempre devolvíamos un diccionario, por eso no poníamos eso, pero en este caso
@@ -89,25 +133,20 @@ class Prediction(BaseModel):
     model_version: str
     preprocessing_version: str
 
-       
-
     # TODO S9.1b: el modelo devuelve la confianza con todos sus decimales; el
     # contrato público la expone con dos. Investiga `@field_serializer` de
     # Pydantic v2: la decisión pertenece al contrato, no al predictor.
     # Comprobación: tests/test_s9_1_output_contract.py
 
     # Le dice a Pydantic que utilice la función que aparece debajo para serializar
-    # el atributo confidence. 
+    # el atributo confidence.
     # self representa el objeto Prediction
     @field_serializer("confidence")
     def serialize_confidence(self, value: float) -> float:
         return round(value, 2)
 
 
-
-
-
-# Define la respuesta HTTP completa que recibe el usuario. Incluye la 
+# Define la respuesta HTTP completa que recibe el usuario. Incluye la
 # predicción (contrato Prediction), el identificador de la petición y la fecha.
 class PredictionResponse(BaseModel):
     """Respuesta de `POST /v1/predictions`."""
@@ -122,9 +161,11 @@ class PredictionResponse(BaseModel):
 
     @field_serializer("served_at")
     def serializer_served_at(self, value: datetime) -> str:
-        return value.astimezone(UTC).isoformat(
-            timespec="milliseconds"
-        ).replace("+00:00", "Z")
+        return (
+            value.astimezone(UTC)
+            .isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z")
+        )
 
 
 class HealthResponse(BaseModel):
